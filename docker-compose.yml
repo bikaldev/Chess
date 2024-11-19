@@ -1,0 +1,62 @@
+version: '3'
+services:
+  postgres:
+    image: kalibdev/postgres_chess:latest 
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: 'redis'
+    volumes:
+      - redisdata:/data
+    environment:
+      - SAVE=900 1  
+  
+  
+  nginx:
+    restart: always
+    image: kalibdev/reactprojects_nginx:latest
+    ports:
+      - '80:80'
+    depends_on:
+      - api
+      - client
+  
+  api:
+    image: kalibdev/reactprojects_api:latest
+    environment:
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - PGUSER=${PGUSER}
+      - PGHOST=${PGHOST}
+      - PGDATABASE=${PGDATABASE}
+      - PGPASSWORD=${PGPASSWORD}
+      - PGPORT=${PGPORT}
+      - SESSION_KEY=${SESSION_KEY}
+      - PORT=${PORT}
+      - CLIENT_URL=${CLIENT_URL}
+      - HASH_SALT=${HASH_SALT}
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+      - redis
+  
+  client:
+    image: kalibdev/reactprojects_client:latest
+    environment:
+      - REACT_APP_API_URL=${REACT_APP_API_URL}
+      - REACT_APP_SOCKET_URL=${REACT_APP_SOCKET_URL}
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+
+
+volumes:
+  pgdata:
+  redisdata:
